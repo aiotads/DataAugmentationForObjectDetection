@@ -8,6 +8,7 @@ import argparse
 import glob
 import os
 import time
+import random
 
 from data_aug.data_aug import *
 from data_aug.bbox_util import *
@@ -77,11 +78,37 @@ def flip_image(img, bboxes, label, time, path, flip):
     
     return plotted_img
 
+def hsv_image(img, bboxes, label, time, path, hsv):
+    # hsv = (h,s,v)
+    img_ver, bboxes_ = RandomHSV(hsv)(img.copy(), bboxes.copy())
+    plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
+    cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
+    return plotted_img
+
+
+def range_brightness_image(img, bboxes, label, time, path, value):
+    
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+
+    # for value in check_duplicate:
+    lim = 255 - value
+    v[v > lim] = 255
+    v[v <= lim] += value
+
+    final_hsv = cv2.merge((h, s, v))
+    img_ver = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+    plotted_img = draw_rect(path, time, label, img_ver, bboxes)
+    cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
+    return plotted_img
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-p',    '--img_path',   type=str           , help='Please give dataset directory')
     ap.add_argument('-op',   '--output_path',type=str           , help='Please give aug dataset output directory')
     ap.add_argument('-flip', '--flip',       type=str           , help='flip image, 1=Vertical, 2=Diagonal, 3=Horizontal')
+    ap.add_argument('-hsv', '--hsv',         type=str           , help='random image hsv')
+    ap.add_argument('-b', '--brightness',    type=int, nargs='+', help='Usage python3 augCli.py -b <pics range> <brightness min value> <brightness max value>')
     ap.add_argument('-s',    '--show',       action='store_true', help='show result')
 
     args = ap.parse_args()
@@ -122,8 +149,20 @@ def main():
             
         bboxes = np.array(_bboxes) 
         f.close
+        if args.flip:
+            plotted_img = flip_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, args.flip)
+        elif args.brightness:
+            check_duplicate = []
+            for i in range(0, args.brightness[0]):
+                # print("i", i)
+                _value = random.randrange(args.brightness[1], args.brightness[2], 2)
+                if _value not in check_duplicate:
+                    check_duplicate.append(_value)
 
-        plotted_img = flip_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, args.flip)
+            for value in check_duplicate:
+                # print("v", value)
+                plotted_img = range_brightness_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, value)
+                index = index+1
         index = index+1
         
         if args.show: 
