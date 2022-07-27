@@ -77,8 +77,7 @@ def flip_image(img, bboxes, label, time, path, flip):
         img_ver, bboxes_ = RandomHorizontalFlip(1)(img.copy(), bboxes.copy())
         plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
     
-    cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
-    
+    cv2.imwrite('{}/{}.png'.format(path, time), img_ver)    
     return plotted_img
 
 def hsv_image(img, bboxes, label, time, path, hsv):
@@ -118,18 +117,18 @@ def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     cut = int(len(files)*round(ratio, 1))
     arr1 = files[:cut]
     arr2 = files[cut:]
-    # print(len(files))
-    # print(round(ratio, 1))
-    # print(len(arr1))
-    # print(len(arr2))
+    print(len(files))
+    print(round(ratio, 1))
+    print(len(arr1))
+    print(len(arr2))
 
     val_cut = int(len(arr2)*0.5)
     val_arr = arr2[:val_cut]
     test_arr = arr2[val_cut:]
     
-    # print(val_cut)
-    # print(len(val_arr))
-    # print(len(test_arr))
+    print(val_cut)
+    print(len(val_arr))
+    print(len(test_arr))
 
     for j in test_arr:
         shutil.move(j, test_data_path)
@@ -153,10 +152,12 @@ def main():
     ap.add_argument('-p',    '--img_path',   type=str           , help='Please give dataset directory')
     ap.add_argument('-op',   '--output_path',type=str           , help='Please give aug dataset output directory')
     ap.add_argument('-gen',  '--gen',        action='store_true', help='gen empty label txt')
-    ap.add_argument('-flip', '--flip',       type=str           , help='flip image, 1=Vertical, 2=Diagonal, 3=Horizontal')
+    ap.add_argument('-flip', '--flip',       type=str, nargs='+', help='flip image, 1=Vertical, 2=Diagonal, 3=Horizontal')
     ap.add_argument('-hsv', '--hsv',         type=str           , help='random image hsv')
-    ap.add_argument('-b', '--brightness',    type=int, nargs='+', help='Usage python3 augCli.py -b <pics range> <brightness min value> <brightness max value>')
+    ap.add_argument('-b', '--brightness',    type=float, nargs='+', help='Usage python3 augCli.py -b <gen train amount> <split ratio> <brightness min value> <brightness max value>')
     ap.add_argument('-s',    '--show',       action='store_true', help='show result')
+    # ap.add_argument('-sp',    '--split',     type=int           , help='split data')
+
 
     args = ap.parse_args()
     print(args.img_path)
@@ -167,19 +168,16 @@ def main():
     os.makedirs("{}/val".format(args.output_path))
 
     index = 0
+    spilt_list_data = []
     for i in list_image:
         print("image path: ", i)
 
         img = cv2.imread(i)
         img_shape = img.shape[:2] # (height, width)
         size = (img_shape[1], img_shape[0]) # (width, height)
+        
+        f = open("{}.txt".format((i.split('.')[:-1])[0]), 'a+')
 
-        spilt_list_data = []
-
-        # if not args.gen:
-        f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
-            
-        _bboxes = list()
         lines = f.readlines()
         if not lines == []:      
             for line in lines:
@@ -212,17 +210,20 @@ def main():
         
         if args.flip:
             # empty_label_txt(args.output_path, output_time()+str(index))
-            plotted_img = flip_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, args.flip)
+            plotted_img = flip_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, args.flip[0])
             spilt_list_data.append("{}/{}.png".format(args.output_path, output_time()+str(index)))
             index = index+1
 
         elif args.brightness:
             check_duplicate = []
-            if not (args.brightness[1] + args.brightness[2]) > args.brightness[0]*2.5:
+            spilt_list_data = []
+            gen_total = int(args.brightness[0]/args.brightness[1])
+            print(gen_total)
+            if not (args.brightness[2] + args.brightness[3]) > gen_total*2:
                 raise ValueError('Please give larger range or decrease total amount.')
             
-            while len(check_duplicate) != args.brightness[0]*1.25:
-                _value = random.randrange(args.brightness[1], args.brightness[2], 2)
+            while len(check_duplicate) != gen_total:
+                _value = random.randrange(args.brightness[2], args.brightness[3], 2)
                 if _value not in check_duplicate:
                     check_duplicate.append(_value)
 
@@ -232,13 +233,17 @@ def main():
                 plotted_img = range_brightness_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, value)
                 index = index+1
             
-        splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), 0.8)
-        index = index+1
+            splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), args.brightness[1])
+            index = index+1                
         
+
         if args.show: 
             cv2.imshow("result", plotted_img)
             cv2.waitKey(0)
             cv2.destroyWindow('result')
+
+    if args.flip:
+        splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), 0.8)
  
   
 
