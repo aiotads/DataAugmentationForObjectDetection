@@ -43,7 +43,7 @@ def check_image_exist(image_list):
     else:
         raise ValueError('Please give the image directory which have .png .jpg or .jpeg inside.')
 
-#沒用到？？
+
 def output_save_image(image, path):
     output_time ="{}-{}".format(datetime.datetime.now().date(),datetime.datetime.now().time())
     print(path)
@@ -80,6 +80,7 @@ def flip_image(img, bboxes, label, time, path, flip):
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)    
     return plotted_img
 
+
 def hsv_image(img, bboxes, label, time, path, hsv):
     # hsv = (h,s,v)
     img_ver, bboxes_ = RandomHSV(hsv)(img.copy(), bboxes.copy())
@@ -104,8 +105,10 @@ def range_brightness_image(img, bboxes, label, time, path, value):
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
     return plotted_img
 
+
 def empty_label_txt(path, time):
     open("{}/{}.txt".format(path, time), 'a').close()
+
 
 def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     # for file in files:
@@ -117,18 +120,10 @@ def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     cut = int(len(files)*round(ratio, 1))
     arr1 = files[:cut]
     arr2 = files[cut:]
-    print(len(files))
-    print(round(ratio, 1))
-    print(len(arr1))
-    print(len(arr2))
 
     val_cut = int(len(arr2)*0.5)
     val_arr = arr2[:val_cut]
     test_arr = arr2[val_cut:]
-    
-    print(val_cut)
-    print(len(val_arr))
-    print(len(test_arr))
 
     for j in test_arr:
         shutil.move(j, test_data_path)
@@ -158,7 +153,6 @@ def main():
     ap.add_argument('-s',    '--show',       action='store_true', help='show result')
     # ap.add_argument('-sp',    '--split',     type=int           , help='split data')
 
-
     args = ap.parse_args()
     print(args.img_path)
     # test path: /home/hueiru/Desktop/test_python/sample_D/NG
@@ -175,11 +169,15 @@ def main():
         img = cv2.imread(i)
         img_shape = img.shape[:2] # (height, width)
         size = (img_shape[1], img_shape[0]) # (width, height)
-        
-        f = open("{}.txt".format((i.split('.')[:-1])[0]), 'a+')
 
+        f = open("{}.txt".format((i.split('.')[:-1])[0]), 'a')
+
+        if os.path.isfile("{}.txt".format((i.split('.')[:-1])[0])):
+            f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
+
+        _bboxes = list()
         lines = f.readlines()
-        if not lines == []:      
+        if not lines == []:
             for line in lines:
                 print('There is labeling: ', line)
                 labeling_data = list(map(float, line.split(" "))) # change list str() to int()
