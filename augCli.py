@@ -25,6 +25,7 @@ def load_images(images_path):
     In other case, it's a folder, return a list with names of each
     jpg, jpeg and png file
     """
+    #要求user給目錄
     input_path_extension = images_path.split('.')[-1]
     if input_path_extension in ['jpg', 'jpeg', 'png']:
         raise ValueError('Please give the image directory')
@@ -42,6 +43,7 @@ def check_image_exist(image_list):
     else:
         raise ValueError('Please give the image directory which have .png .jpg or .jpeg inside.')
 
+#沒用到？？
 def output_save_image(image, path):
     output_time ="{}-{}".format(datetime.datetime.now().date(),datetime.datetime.now().time())
     print(path)
@@ -106,32 +108,34 @@ def range_brightness_image(img, bboxes, label, time, path, value):
 def empty_label_txt(path, time):
     open("{}/{}.txt".format(path, time), 'a').close()
 
-def splitdata(files, test_data_path, val_data_path, ratio=0.9):
+def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     # for file in files:
         # print(os.path.abspath(image_path))
         # files = load_images(os.path.abspath(image_path))
         
     random.shuffle(files)
-   
+
     cut = int(len(files)*round(ratio, 1))
-   
     arr1 = files[:cut]
-    
-  
     arr2 = files[cut:]
+    # print(len(files))
+    # print(round(ratio, 1))
+    # print(len(arr1))
+    # print(len(arr2))
+
+    val_cut = int(len(arr2)*0.5)
+    val_arr = arr2[:val_cut]
+    test_arr = arr2[val_cut:]
     
-    for j in arr2:
+    # print(val_cut)
+    # print(len(val_arr))
+    # print(len(test_arr))
+
+    for j in test_arr:
         shutil.move(j, test_data_path)
         shutil.move(j.split('.')[:-1][0]+".txt", test_data_path)
 
-    val_cut = int(len(arr1)*round(ratio, 1))
-
-    val_arr1 = arr1[:val_cut]
-    
-   
-    val_arr2 = arr1[val_cut:]
-
-    for j in val_arr2:
+    for j in val_arr:
         shutil.move(j, val_data_path)
         shutil.move(j.split('.')[:-1][0]+".txt", val_data_path)
 
@@ -159,27 +163,31 @@ def main():
     # test path: /home/hueiru/Desktop/test_python/sample_D/NG
     list_image = load_images(args.img_path)
 
-   
+    os.makedirs("{}/test".format(args.output_path))
+    os.makedirs("{}/val".format(args.output_path))
+
     index = 0
     for i in list_image:
         print("image path: ", i)
+
         img = cv2.imread(i)
         img_shape = img.shape[:2] # (height, width)
         size = (img_shape[1], img_shape[0]) # (width, height)
-        
+
         spilt_list_data = []
 
-        if not args.gen:
-            f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
+        # if not args.gen:
+        f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
             
-            _bboxes = list()
-            for line in f.readlines():
-                print(line)
+        _bboxes = list()
+        lines = f.readlines()
+        if not lines == []:      
+            for line in lines:
+                print('There is labeling: ', line)
                 labeling_data = list(map(float, line.split(" "))) # change list str() to int()
 
                 # left, top, width, height = [0.591406,0.730469,0.079687,0.080078]
                 left, top, width, height = labeling_data[1:]
-
 
                 x =  size[0] * left       
                 y =  size[1] * top        
@@ -198,29 +206,33 @@ def main():
             bboxes = np.array(_bboxes)
             f.close
         else:
+            print('.txt is NULL')
             bboxes = []
             labeling_data = [0]
         
         if args.flip:
             # empty_label_txt(args.output_path, output_time()+str(index))
             plotted_img = flip_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, args.flip)
+            spilt_list_data.append("{}/{}.png".format(args.output_path, output_time()+str(index)))
+            index = index+1
+
         elif args.brightness:
             check_duplicate = []
-            for i in range(0, args.brightness[0]):
-                # print("i", i)
+            if not (args.brightness[1] + args.brightness[2]) > args.brightness[0]*2.5:
+                raise ValueError('Please give larger range or decrease total amount.')
+            
+            while len(check_duplicate) != args.brightness[0]*1.25:
                 _value = random.randrange(args.brightness[1], args.brightness[2], 2)
                 if _value not in check_duplicate:
                     check_duplicate.append(_value)
 
             for value in check_duplicate:
-                print("v", value)
                 empty_label_txt(args.output_path, output_time()+str(index))
                 spilt_list_data.append("{}/{}.png".format(args.output_path, output_time()+str(index)))
                 plotted_img = range_brightness_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, value)
                 index = index+1
-            splitdata(spilt_list_data, "/home/hueiru/Desktop/test_python/sample_D/test","/home/hueiru/Desktop/test_python/sample_D/val", 0.9)
             
-
+        splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), 0.8)
         index = index+1
         
         if args.show: 
