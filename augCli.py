@@ -25,7 +25,7 @@ def load_images(images_path):
     In other case, it's a folder, return a list with names of each
     jpg, jpeg and png file
     """
-    #要求user給目錄
+
     input_path_extension = images_path.split('.')[-1]
     if input_path_extension in ['jpg', 'jpeg', 'png']:
         raise ValueError('Please give the image directory')
@@ -43,7 +43,6 @@ def check_image_exist(image_list):
     else:
         raise ValueError('Please give the image directory which have .png .jpg or .jpeg inside.')
 
-
 def output_save_image(image, path):
     output_time ="{}-{}".format(datetime.datetime.now().date(),datetime.datetime.now().time())
     print(path)
@@ -54,14 +53,12 @@ def output_save_image(image, path):
             time.sleep(1)
         cv2.imwrite('./{}/{}.png'.format(path, output_time), image)
 
-
 def output_time():
     loc_dt = datetime.datetime.today() 
     time_del = datetime.timedelta(hours=0)
     new_dt = loc_dt + time_del 
     datetime_format = new_dt.strftime("%Y-%m-%d_%H-%M-%S")
     return datetime_format
-
 
 def flip_image(img, bboxes, label, time, path, flip):
     if flip == "1":
@@ -80,14 +77,12 @@ def flip_image(img, bboxes, label, time, path, flip):
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)    
     return plotted_img
 
-
 def hsv_image(img, bboxes, label, time, path, hsv):
     # hsv = (h,s,v)
     img_ver, bboxes_ = RandomHSV(hsv)(img.copy(), bboxes.copy())
     plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
     return plotted_img
-
 
 def range_brightness_image(img, bboxes, label, time, path, value):
     
@@ -104,7 +99,6 @@ def range_brightness_image(img, bboxes, label, time, path, value):
     plotted_img = draw_rect(path, time, label, img_ver, bboxes)
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
     return plotted_img
-
 
 def empty_label_txt(path, time):
     open("{}/{}.txt".format(path, time), 'a').close()
@@ -132,120 +126,129 @@ def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     for j in val_arr:
         shutil.move(j, val_data_path)
         shutil.move(j.split('.')[:-1][0]+".txt", val_data_path)
-
-
-
-    
-
-
-
-
-
     
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('-p',    '--img_path',   type=str           , help='Please give dataset directory')
-    ap.add_argument('-op',   '--output_path',type=str           , help='Please give aug dataset output directory')
-    ap.add_argument('-gen',  '--gen',        action='store_true', help='gen empty label txt')
-    ap.add_argument('-flip', '--flip',       type=str, nargs='+', help='flip image, 1=Vertical, 2=Diagonal, 3=Horizontal')
-    ap.add_argument('-hsv', '--hsv',         type=str           , help='random image hsv')
-    ap.add_argument('-b', '--brightness',    type=float, nargs='+', help='Usage python3 augCli.py -b <gen train amount> <split ratio> <brightness min value> <brightness max value>')
-    ap.add_argument('-s',    '--show',       action='store_true', help='show result')
-    # ap.add_argument('-sp',    '--split',     type=int           , help='split data')
+    ap.add_argument('-p',    '--img_path',       type=str, nargs='+',   help='Please give class name and dataset directory')
+    ap.add_argument('-op',   '--output_path',    type=str,              help='Please give aug dataset output directory')
+    ap.add_argument('-gen',  '--gen',            action='store_true',   help='gen empty label txt')
+    ap.add_argument('-flip', '--flip',           type=str,              help='flip image, 1=Vertical, 2=Diagonal, 3=Horizontal')
+    ap.add_argument('-hsv',  '--hsv',            type=str,              help='random image hsv')
+    ap.add_argument('-b',    '--brightness',     type=float, nargs='+', help='Usage python3 augCli.py -b <gen train amount> <split ratio> <brightness min value> <brightness max value>')
+    ap.add_argument('-s',    '--show',           action='store_true',   help='show result')
 
     args = ap.parse_args()
-    print(args.img_path)
-    # test path: /home/hueiru/Desktop/test_python/sample_D/NG
-    list_image = load_images(args.img_path)
 
-    os.makedirs("{}/test".format(args.output_path))
-    os.makedirs("{}/val".format(args.output_path))
+    # os.makedirs("{}/val".format(args.output_path))
+    # os.makedirs("{}/test".format(args.output_path))
 
-    index = 0
-    spilt_list_data = []
-    for i in list_image:
-        print("image path: ", i)
+    infos = args.img_path
+    print(infos)
+    
+    i = 0
+    classes = {}
+    
+    while i < len(infos):
+        classes[infos[i]] = infos[i+1]
+        i += 2
 
-        img = cv2.imread(i)
-        img_shape = img.shape[:2] # (height, width)
-        size = (img_shape[1], img_shape[0]) # (width, height)
+    amount_max = 0
+    for path in classes.values():
+        list_image = load_images(path)
+        class_amount = len(list_image)
+        if class_amount > amount_max:
+            amount_max = class_amount
+            class_max = list(classes.keys())[list(classes.values()).index(path)]
 
-        f = open("{}.txt".format((i.split('.')[:-1])[0]), 'a')
+    print(class_max,amount_max)
+    for image_path in image_path_list:
+        list_image = load_images(image_path)
+        # class_name = image_class_list[image_path_list.index(image_path)]
+        # class_amount = len(list_image)
+        # print(list_image)
 
-        if os.path.isfile("{}.txt".format((i.split('.')[:-1])[0])):
-            f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
+        index = 0
+        spilt_list_data = []
+        for i in list_image:
+            break
+            print("image path: ", i)
 
-        _bboxes = list()
-        lines = f.readlines()
-        if not lines == []:
-            for line in lines:
-                print('There is labeling: ', line)
-                labeling_data = list(map(float, line.split(" "))) # change list str() to int()
+            img = cv2.imread(i)
+            img_shape = img.shape[:2] # (height, width)
+            size = (img_shape[1], img_shape[0]) # (width, height)
 
-                # left, top, width, height = [0.591406,0.730469,0.079687,0.080078]
-                left, top, width, height = labeling_data[1:]
+            f = open("{}.txt".format((i.split('.')[:-1])[0]), 'a')
 
-                x =  size[0] * left       
-                y =  size[1] * top        
-                w =  (size[0] * width) / 2      
-                h =  (size[1] * height) / 2
+            if os.path.isfile("{}.txt".format((i.split('.')[:-1])[0])):
+                f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
 
-                xmin = x - w
-                ymin = y - h
-                xmax = x + w
-                ymax = y + h 
+            _bboxes = list()
+            lines = f.readlines()
+            if not lines == []:
+                for line in lines:
+                    print('There is labeling: ', line)
+                    labeling_data = list(map(float, line.split(" "))) # change list str() to int()
 
-                list_bbox = [xmin, ymin, xmax, ymax, labeling_data[0]]
-                
-                _bboxes.append(list_bbox)
-                
-            bboxes = np.array(_bboxes)
-            f.close
-        else:
-            print('.txt is NULL')
-            bboxes = []
-            labeling_data = [0]
-        
-        if args.flip:
-            # empty_label_txt(args.output_path, output_time()+str(index))
-            plotted_img = flip_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, args.flip[0])
-            spilt_list_data.append("{}/{}.png".format(args.output_path, output_time()+str(index)))
-            index = index+1
+                    # left, top, width, height = [0.591406,0.730469,0.079687,0.080078]
+                    left, top, width, height = labeling_data[1:]
 
-        elif args.brightness:
-            check_duplicate = []
-            spilt_list_data = []
-            gen_total = int(args.brightness[0]/args.brightness[1])
-            print(gen_total)
-            if not (args.brightness[2] + args.brightness[3]) > gen_total*2:
-                raise ValueError('Please give larger range or decrease total amount.')
+                    x =  size[0] * left       
+                    y =  size[1] * top        
+                    w =  (size[0] * width) / 2      
+                    h =  (size[1] * height) / 2
+
+                    xmin = x - w
+                    ymin = y - h
+                    xmax = x + w
+                    ymax = y + h 
+
+                    list_bbox = [xmin, ymin, xmax, ymax, labeling_data[0]]
+                    
+                    _bboxes.append(list_bbox)
+                    
+                bboxes = np.array(_bboxes)
+                f.close
+            else:
+                print('.txt is NULL')
+                bboxes = []
+                labeling_data = [0]
             
-            while len(check_duplicate) != gen_total:
-                _value = random.randrange(args.brightness[2], args.brightness[3], 2)
-                if _value not in check_duplicate:
-                    check_duplicate.append(_value)
-
-            for value in check_duplicate:
-                empty_label_txt(args.output_path, output_time()+str(index))
-                spilt_list_data.append("{}/{}.png".format(args.output_path, output_time()+str(index)))
-                plotted_img = range_brightness_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, value)
+            if args.flip:
+                # empty_label_txt(args.output_path, output_time()+str(index))
+                plotted_img = flip_image(img, bboxes, labeling_data[0], class_name+output_time()+str(index), args.output_path, args.flip)
+                spilt_list_data.append("{}/{}.png".format(args.output_path, class_name+output_time()+str(index)))
                 index = index+1
+
+            elif args.brightness:
+                check_duplicate = []
+                spilt_list_data = []
+                gen_total = int(args.brightness[0]/args.brightness[1])
+                print(gen_total)
+                if not (args.brightness[2] + args.brightness[3]) > gen_total*2:
+                    raise ValueError('Please give larger range or decrease total amount.')
+                
+                while len(check_duplicate) != gen_total:
+                    _value = random.randrange(args.brightness[2], args.brightness[3], 2)
+                    if _value not in check_duplicate:
+                        check_duplicate.append(_value)
+
+                for value in check_duplicate:
+                    empty_label_txt(args.output_path, output_time()+str(index))
+                    spilt_list_data.append("{}/{}.png".format(args.output_path, output_time()+str(index)))
+                    plotted_img = range_brightness_image(img, bboxes, labeling_data[0], output_time()+str(index), args.output_path, value)
+                    index = index+1
+                
+                splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), args.brightness[1])
+                index = index+1                
             
-            splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), args.brightness[1])
-            index = index+1                
-        
+            if args.show: 
+                cv2.imshow("result", plotted_img)
+                cv2.waitKey(0)
+                cv2.destroyWindow('result')
 
-        if args.show: 
-            cv2.imshow("result", plotted_img)
-            cv2.waitKey(0)
-            cv2.destroyWindow('result')
-
-    if args.flip:
-        splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), 0.8)
+        if args.flip:
+            splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), 0.8)
  
-  
-
-
 if __name__ == '__main__':
 
     main()
