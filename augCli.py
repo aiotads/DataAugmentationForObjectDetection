@@ -154,8 +154,7 @@ def main():
 
     amount_max = 0
     for path in classes.values():
-        list_image = load_images(path)
-        class_amount = len(list_image)
+        class_amount = len(load_images(path))
         if class_amount > amount_max:
             amount_max = class_amount
             class_max = list(classes.keys())[list(classes.values()).index(path)]
@@ -163,9 +162,6 @@ def main():
     print(class_max,amount_max)
     for image_path in image_path_list:
         list_image = load_images(image_path)
-        # class_name = image_class_list[image_path_list.index(image_path)]
-        # class_amount = len(list_image)
-        # print(list_image)
 
         index = 0
         spilt_list_data = []
