@@ -17,7 +17,10 @@ import pickle as pkl
 import numpy as np 
 import matplotlib.pyplot as plt
 import datetime
+from mod.labelimg import *
+from mod.classes import *
 
+#img.py
 def load_images(images_path):
     """
     If image path is given, return it directly
@@ -35,7 +38,7 @@ def load_images(images_path):
         return glob.glob(os.path.join(images_path, "*.jpg")) + \
             glob.glob(os.path.join(images_path, "*.png")) + \
             glob.glob(os.path.join(images_path, "*.jpeg"))
-
+#??
 def check_image_exist(image_list):
     if image_list:
         pass
@@ -43,6 +46,7 @@ def check_image_exist(image_list):
     else:
         raise ValueError('Please give the image directory which have .png .jpg or .jpeg inside.')
 
+#??
 def output_save_image(image, path):
     output_time ="{}-{}".format(datetime.datetime.now().date(),datetime.datetime.now().time())
     print(path)
@@ -53,6 +57,7 @@ def output_save_image(image, path):
             time.sleep(1)
         cv2.imwrite('./{}/{}.png'.format(path, output_time), image)
 
+#img.py
 def output_time():
     loc_dt = datetime.datetime.today() 
     time_del = datetime.timedelta(hours=0)
@@ -60,6 +65,7 @@ def output_time():
     datetime_format = new_dt.strftime("%Y-%m-%d_%H-%M-%S")
     return datetime_format
 
+#util.py
 def flip_image(img, bboxes, label, time, path, flip):
     if flip == "1":
         img_ver, bboxes_ = RandomVerticalFlip(1)(img.copy(), bboxes.copy())
@@ -85,6 +91,7 @@ def flip_image(img, bboxes, label, time, path, flip):
     #     img_ver, bboxes_ = RandomHorizontalFlip(1)(img.copy(), bboxes.copy())
     #     plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
 
+#??
 def hsv_image(img, bboxes, label, time, path, hsv):
     # hsv = (h,s,v)
     img_ver, bboxes_ = RandomHSV(hsv)(img.copy(), bboxes.copy())
@@ -92,6 +99,7 @@ def hsv_image(img, bboxes, label, time, path, hsv):
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
     return plotted_img
 
+#util.py
 def range_brightness_image(img, bboxes, label, time, path, value):
     
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -107,9 +115,11 @@ def range_brightness_image(img, bboxes, label, time, path, value):
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
     return plotted_img
 
+#??
 def empty_label_txt(path, time):
     open("{}/{}.txt".format(path, time), 'a').close()
 
+#util.py
 def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     # for file in files:
         # print(os.path.abspath(image_path))
@@ -140,55 +150,35 @@ def main():
     ap.add_argument('-gen',  '--gen',            action='store_true',   help='gen empty label txt')
     ap.add_argument('-f',    '--flip',           type=str,              help='flip image, 1=Vertical, 2=Diagonal, 3=Horizontal')
     ap.add_argument('-hsv',  '--hsv',            type=str,              help='random image hsv')
-    ap.add_argument('-b',    '--brightness',     type=float, nargs='+', help='Usage python3 augCli.py -b <demand of train amount(each class)> <split ratio> <brightness min value> <brightness max value>')
+    ap.add_argument('-b',    '--brightness',     type=int, nargs='+',   help='Usage python3 augCli.py -b <demand of train amount(each class)> <brightness min value> <brightness max value>')
     ap.add_argument('-s',    '--show',           action='store_true',   help='show result')
+    ap.add_argument('-sp',   '--split',         type=float,            help='split ratio')
 
     args = ap.parse_args()
 
     os.makedirs("{}/val".format(args.output_path))
     os.makedirs("{}/test".format(args.output_path))
-
-    infos = args.img_path
     
     i = 0
     classes = {}
-    
+    infos = args.img_path
     while i < len(infos):
         classes[infos[i]] = infos[i+1]
         i += 2
 
-    amount_max = 0
-    diff = 0
-    class_amount = 0
-    for path in classes.values():
-        class_amount = len(load_images(path))
-        if class_amount > amount_max:
-            diff = class_amount - amount_max
-            amount_max = class_amount
-            class_max = list(classes.keys())[list(classes.values()).index(path)]
-
-    total_demand = int(args.brightness[0]/args.brightness[1])
-
-    for image_path in classes.values():
+    classes_info = get_classesinfo(classes)
+    for img_path in classes_info['path']:
         list_image = load_images(image_path)
-        
-        class_name = list(classes.keys())[list(classes.values()).index(image_path)]
-        class_amount = amount_max - diff
-        if class_max == class_name:
-            class_amount = amount_max
-
         index = 0
         spilt_list_data = []
-
+        break
         for i in list_image:
             print("image path: ", i)
 
             img = cv2.imread(i)
-            img_shape = img.shape[:2] # (height, width)
-            size = (img_shape[1], img_shape[0]) # (width, height)
+            size = get_imginfo(img)
 
             f = open("{}.txt".format((i.split('.')[:-1])[0]), 'a')
-
             if os.path.isfile("{}.txt".format((i.split('.')[:-1])[0])):
                 f = open("{}.txt".format((i.split('.')[:-1])[0]), 'r')
 
@@ -198,26 +188,9 @@ def main():
                 for line in lines:
                     print('There is labeling: ', line)
                     labeling_data = list(map(float, line.split(" "))) # change list str() to int()
-
-                    # left, top, width, height = [0.591406,0.730469,0.079687,0.080078]
-                    left, top, width, height = labeling_data[1:]
-
-                    x =  size[0] * left       
-                    y =  size[1] * top        
-                    w =  (size[0] * width) / 2      
-                    h =  (size[1] * height) / 2
-
-                    xmin = x - w
-                    ymin = y - h
-                    xmax = x + w
-                    ymax = y + h 
-
-                    list_bbox = [xmin, ymin, xmax, ymax, labeling_data[0]]
-                    
-                    _bboxes.append(list_bbox)
-                    
-                bboxes = np.array(_bboxes)
+                bboxes = np.array(convert_bboxes(labeling_data, size))
                 f.close
+                print(bboxes)
             else:
                 print('.txt is NULL')
                 bboxes = []
@@ -232,13 +205,14 @@ def main():
 
             if args.brightness:
                 print('Start duplicating.')
+                total_demand = int(args.brightness[0]/args.split)
                 check_duplicate = []
                 duplicate_amount = int((total_demand - class_amount)/class_amount)
-                if not (args.brightness[2] + args.brightness[3]) > duplicate_amount*2:
+                if not (args.brightness[1] + args.brightness[2]) > duplicate_amount*2:
                     raise ValueError('Please give larger range or decrease total amount.')
                 
                 while len(check_duplicate) != duplicate_amount:
-                    _value = random.randrange(args.brightness[2], args.brightness[3], 2)
+                    _value = random.randrange(args.brightness[1], args.brightness[2], 2)
                     if _value not in check_duplicate:
                         check_duplicate.append(_value)
 
@@ -247,14 +221,14 @@ def main():
                     spilt_list_data.append("{}/{}.png".format(args.output_path, class_name+output_time()+str(index)))
                     plotted_img = range_brightness_image(img, bboxes, labeling_data[0], class_name+output_time()+str(index), args.output_path, value)
                     index = index+1
-                
-        splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), args.brightness[1])
+        # break       
+        splitdata(spilt_list_data, "{}/test".format(args.output_path), "{}/val".format(args.output_path), args.split)
         index = index+1                
             
-            # if args.show: 
-            #     cv2.imshow("result", plotted_img)
-            #     cv2.waitKey(0)
-            #     cv2.destroyWindow('result')
+        # if args.show: 
+        #     cv2.imshow("result", plotted_img)
+        #     cv2.waitKey(0)
+        #     cv2.destroyWindow('result')
  
 if __name__ == '__main__':
 
