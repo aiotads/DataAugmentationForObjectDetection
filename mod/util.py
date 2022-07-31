@@ -1,4 +1,9 @@
-
+import shutil
+import random
+import cv2
+import matplotlib.pyplot as plt
+from data_aug.data_aug import *
+from data_aug.bbox_util import *
 
 def flip_image(img, bboxes, label, time, path, flip):
     if flip == "1":
@@ -32,14 +37,10 @@ def range_brightness_image(img, bboxes, label, time, path, value):
     return plotted_img
 
 def splitdata(files, test_data_path, val_data_path, ratio=0.8):
-    # for file in files:
-        # print(os.path.abspath(image_path))
-        # files = load_images(os.path.abspath(image_path))
         
     random.shuffle(files)
 
     cut = int(len(files)*round(ratio, 1))
-    arr1 = files[:cut]
     arr2 = files[cut:]
 
     val_cut = int(len(arr2)*0.5)
@@ -53,3 +54,24 @@ def splitdata(files, test_data_path, val_data_path, ratio=0.8):
     for j in val_arr:
         shutil.move(j, val_data_path)
         shutil.move(j.split('.')[:-1][0]+".txt", val_data_path)
+
+def hsv_image(img, bboxes, label, time, path, hsv):
+    # hsv = (h,s,v)
+    img_ver, bboxes_ = RandomHSV(hsv)(img.copy(), bboxes.copy())
+    plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
+    cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
+    return plotted_img
+
+def cal_duplicate(train_demand, split_ratio, current_amount, brightness_min, brightness_max):
+    check_duplicate = []
+    total_demand = int(train_demand/split_ratio)
+    duplicate_amount = int((total_demand - current_amount)/current_amount)
+    if not (brightness_min + brightness_max) > duplicate_amount*2:
+        raise ValueError('Please give larger range or decrease total amount.')     
+    print(duplicate_amount)
+    while len(check_duplicate) != duplicate_amount:
+        _value = random.randrange(brightness_min, brightness_max, 2)
+        if _value not in check_duplicate:
+            check_duplicate.append(_value)
+    return check_duplicate
+
