@@ -78,9 +78,7 @@ class RandomVerticalFlip(object):
 
     def __call__(self, img, bboxes):
             img_center = np.array(img.shape[:2])[::-1]/2
-            print(img_center)
             img_center = np.hstack((img_center, img_center))
-            print(img_center)
             if random.random() < self.p:
               
                 img = img[::-1, :, :]
@@ -91,7 +89,6 @@ class RandomVerticalFlip(object):
 
                 bboxes[:, 1] -= box_w
                 bboxes[:, 3] += box_w
-           
             return img, bboxes
 
 class RandomDiagonalFlip(object):
@@ -122,9 +119,7 @@ class RandomDiagonalFlip(object):
 
     def __call__(self, img, bboxes):
             img_center = np.array(img.shape[:2])[::-1]/2
-            print(img_center)
             img_center = np.hstack((img_center, img_center))
-            print(img_center)
             if random.random() < self.p:
               
                 img = img[::-1, :, :] # x
@@ -134,7 +129,6 @@ class RandomDiagonalFlip(object):
                 bboxes[:, [1, 3]] += 2*(img_center[[1, 3]] - bboxes[:, [1, 3]])
 
                 box_w = abs(bboxes[:, 1] - bboxes[:, 3])
-                print(box_w)
 
                 bboxes[:, 1] -= box_w
                 bboxes[:, 3] += box_w
@@ -618,7 +612,6 @@ class Rotate(object):
         """
         
         angle = self.angle
-        print(self.angle)
         
         w,h = img.shape[1], img.shape[0]
         cx, cy = w//2, h//2

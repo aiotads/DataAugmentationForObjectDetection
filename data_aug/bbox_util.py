@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 
 
-def draw_rect(path, time, label_index,im, cords, color = None):
+# def draw_rect(path, time, label_index,im, cords, color = None):
+def draw_rect(path, time, im, cords, color = None):
     """Draw the rectangle on the image
     
     Parameters
@@ -23,41 +24,40 @@ def draw_rect(path, time, label_index,im, cords, color = None):
         numpy image with bounding boxes drawn on it
         
     """
-
     if len(cords): 
         im = im.copy()
         
+        label = cords[:,-1:]
         cords = cords[:,:4]
+        
         cords = cords.reshape(-1,4)
         if not color:
             color = [255,255,255]
-        print("c", cords)
 
 
-        for cord in cords:
-            pt1, pt2 = (cord[0], cord[1]) , (cord[2], cord[3])
-                    
-            pt1 = int(pt1[0]), int(pt1[1])
-            pt2 = int(pt2[0]), int(pt2[1])
-        
-            im = cv2.rectangle(im.copy(), pt1, pt2, color, int(max(im.shape[:2])/200))
-
-            left = (cord[2] - cord[0]) / 2 + cord[0] 
-            top = (cord[3] - cord[1]) / 2 + cord[1]
-            width = (cord[2] - cord[0])
-            height = (cord[3] - cord[1])
+        with open("{}/{}.txt".format(path, time), 'w') as f:
+            for cord, lbl in zip(cords, label):
+                pt1, pt2 = (cord[0], cord[1]) , (cord[2], cord[3])
+                        
+                pt1 = int(pt1[0]), int(pt1[1])
+                pt2 = int(pt2[0]), int(pt2[1])
             
-            img_shape = im.shape[:2] # (height, width)
-            size = (img_shape[1], img_shape[0]) # (width, height)
+                im = cv2.rectangle(im.copy(), pt1, pt2, color, int(max(im.shape[:2])/200))
 
-            x = left / size[0]
-            y = top / size[1]
-            w = (width / size[0])
-            h = (height / size[1])
-        
-            print(x,y,w,h) 
-            with open("{}/{}.txt".format(path, time), 'w') as f:
-                f.write("{} {} {} {} {}\n".format(int(label_index),x,y,w,h))
+                left = (cord[2] - cord[0]) / 2 + cord[0] 
+                top = (cord[3] - cord[1]) / 2 + cord[1]
+                width = (cord[2] - cord[0])
+                height = (cord[3] - cord[1])
+                
+                img_shape = im.shape[:2] # (height, width)
+                size = (img_shape[1], img_shape[0]) # (width, height)
+
+                x = left / size[0]
+                y = top / size[1]
+                w = (width / size[0])
+                h = (height / size[1])
+            
+                f.write("{} {:4f} {:4f} {:4f} {:4f}\n".format(int(lbl[0]),x,y,w,h))
             f.close
     return im
 
@@ -156,7 +156,6 @@ def rotate_im(image, angle):
     # perform the actual rotation and return the image
     image = cv2.warpAffine(image, M, (nW, nH))
 
-#    image = cv2.resize(image, (w,h))
     return image
 
 def get_corners(bboxes):

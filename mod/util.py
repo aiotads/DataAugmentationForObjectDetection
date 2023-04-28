@@ -5,23 +5,26 @@ import matplotlib.pyplot as plt
 from data_aug.data_aug import *
 from data_aug.bbox_util import *
 
-def flip_image(img, bboxes, label, time, path, flip):
+# def flip_image(img, bboxes, label, time, path, flip):
+def flip_image(img, bboxes, time, path, flip):
     if flip == "1":
-        img_ver, bboxes_ = RandomVerticalFlip(1)(img.copy(), bboxes.copy())
-        plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
+        # img, bboxes = RandomVerticalFlip(1)(img.copy(), bboxes.copy())
+        img, _bboxes = RandomVerticalFlip(1)(img.copy(), bboxes.copy())
+        plotted_img = draw_rect(path, time, img, _bboxes)
      
     elif flip == "2":
-        img_ver, bboxes_ = RandomDiagonalFlip(1)(img.copy(), bboxes.copy())
-        plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
+        img, _bboxes = RandomDiagonalFlip(2)(img.copy(), bboxes.copy())
+        plotted_img = draw_rect(path, time, img, _bboxes)
 
     elif flip == "3":
-        img_ver, bboxes_ = RandomHorizontalFlip(1)(img.copy(), bboxes.copy())
-        plotted_img = draw_rect(path, time, label, img_ver, bboxes_)
+        img, _bboxes = RandomHorizontalFlip(3)(img.copy(), bboxes.copy())
+        plotted_img = draw_rect(path, time, img, _bboxes)
     
-    cv2.imwrite('{}/{}.png'.format(path, time), img_ver)    
-    return plotted_img
+    cv2.imwrite('{}/{}.png'.format(path, time), img)   
+    # return plotted_img
 
-def range_brightness_image(img, bboxes, label, time, path, value):
+# def range_brightness_image(img, bboxes, label, time, path, value):
+def range_brightness_image(img, bboxes, time, path, value):
     
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
@@ -32,7 +35,7 @@ def range_brightness_image(img, bboxes, label, time, path, value):
 
     final_hsv = cv2.merge((h, s, v))
     img_ver = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
-    plotted_img = draw_rect(path, time, label, img_ver, bboxes)
+    plotted_img = draw_rect(path, time, img_ver, bboxes)
     cv2.imwrite('{}/{}.png'.format(path, time), img_ver)
     return plotted_img
 
