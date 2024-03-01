@@ -3,7 +3,7 @@ import numpy as np
 
 
 # def draw_rect(path, time, label_index,im, cords, color = None):
-def draw_rect(path, time, im, cords, color = None):
+def draw_rect(path, time, im, mode, name, cords, color = None):
     """Draw the rectangle on the image
     
     Parameters
@@ -35,7 +35,7 @@ def draw_rect(path, time, im, cords, color = None):
             color = [255,255,255]
 
 
-        with open("{}/{}.txt".format(path, time), 'w') as f:
+        with open("{}/{}_{}_{}.txt".format(path, mode, name, time), 'w') as f:
             for cord, lbl in zip(cords, label):
                 pt1, pt2 = (cord[0], cord[1]) , (cord[2], cord[3])
                         
