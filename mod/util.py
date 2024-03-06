@@ -11,16 +11,18 @@ import time
 
 # def flip_image(img, bboxes, label, time, path, flip):
 def flip_image(img, bboxes, time, path, name, flip):
-    mode = "flip"
     if flip == "V":
+        mode = "flip_v"
         img, _bboxes = RandomVerticalFlip(1)(img.copy(), bboxes.copy())
         plotted_img = draw_rect(path, time, img, mode, name, _bboxes)
      
     elif flip == "D":
+        mode = "flip_d"
         img, _bboxes = RandomDiagonalFlip(2)(img.copy(), bboxes.copy())
         plotted_img = draw_rect(path, time, img, mode, name, _bboxes)
 
     elif flip == "H":
+        mode = "flip_h"
         img, _bboxes = RandomHorizontalFlip(3)(img.copy(), bboxes.copy())
         plotted_img = draw_rect(path, time, img, mode, name, _bboxes)
     
@@ -47,6 +49,13 @@ def range_dimming_image(img, bboxes, time, path, name, value):
 
     img_ver = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     plotted_img = draw_rect(path, time, img_ver, mode, name, bboxes)
+    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    return plotted_img
+
+def range_rotate_image(img, bboxes, time, path, name, value):
+    mode = "rotate"
+    img_ver, _bboxes = RandomRotate(int(value))(img.copy(), bboxes.copy())
+    plotted_img = draw_rect(path, time, img_ver, mode, name, _bboxes)
     cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
@@ -135,18 +144,20 @@ def parser_image_name(path):
     
     return file_name
 
-def mosaic(list_image, path, name, value):
+def mosaic(list_image, path, value):
     mode = "mosaic"
     input_size = value
     combined_list = []
 
-    # random.shuffle(list_image)
     while len(list_image) % 4 != 0:
+        print("mosaic pairing pic")
         list_image += random.sample(list_image, 4 - len(list_image) % 4)
-    for l in list_image:
+    
+    for idx, l in enumerate(list_image):
         base_img_path, _ = os.path.splitext(l)
         label_path = base_img_path + '.txt'
         image = cv2.imread(l)
+        print("{} images, read image {} path: {}".format(len(list_image),idx, l))
         h,w,_ = image.shape
         with open(label_path, 'r') as file:
             labels_str = ''
@@ -161,14 +172,14 @@ def mosaic(list_image, path, name, value):
             new_item = f"{l} {labels_str.strip()}\n"
             combined_list.append(new_item)
     grouped_list = [combined_list[i:i + 4] for i in range(0, len(combined_list), 4)]
-    for group in grouped_list:
+    for g_idx, group in enumerate(grouped_list):
+        print("save mosaic image NO.{} : ".format(g_idx))
         _time=time.time()
         image_data, box_data = get_random_data(group, [input_size[0], input_size[1]])
         image_data = Image.fromarray((image_data * 255).astype(np.uint8))
-        image_data.save('{}/{}_{}_{}.png'.format(path, mode, name, _time))
-    # cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), image_data)
+        image_data.save('{}/{}_{}_{}.png'.format(path, mode, str(g_idx), _time))
     
-        with open("{}/{}_{}_{}.txt".format(path, mode, name, _time), 'w') as f:
+        with open("{}/{}_{}_{}.txt".format(path, mode, str(g_idx), _time), 'w') as f:
             for item in box_data:
                 x_min, y_min, x_max, y_max, label = item
                 x_center = ((x_min + x_max) / 2) / input_size[1]
