@@ -24,6 +24,7 @@ def draw_rect(path, time, im, mode, name, cords, color = None):
         numpy image with bounding boxes drawn on it
         
     """
+    is_obj_exist = True
     if len(cords): 
         im = im.copy()
         
@@ -59,7 +60,9 @@ def draw_rect(path, time, im, mode, name, cords, color = None):
             
                 f.write("{} {:4f} {:4f} {:4f} {:4f}\n".format(int(lbl[0]),x,y,w,h))
             f.close
-    return im
+    else:
+        is_obj_exist = False
+    return im, is_obj_exist
 
 def bbox_area(bbox):
     return (bbox[:,2] - bbox[:,0])*(bbox[:,3] - bbox[:,1])

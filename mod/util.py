@@ -14,19 +14,20 @@ def flip_image(img, bboxes, time, path, name, flip):
     if flip == "V":
         mode = "flip_v"
         img, _bboxes = RandomVerticalFlip(1)(img.copy(), bboxes.copy())
-        plotted_img = draw_rect(path, time, img, mode, name, _bboxes)
+        plotted_img, is_obj_exist = draw_rect(path, time, img, mode, name, _bboxes)
      
     elif flip == "D":
         mode = "flip_d"
         img, _bboxes = RandomDiagonalFlip(2)(img.copy(), bboxes.copy())
-        plotted_img = draw_rect(path, time, img, mode, name, _bboxes)
+        plotted_img, is_obj_exist = draw_rect(path, time, img, mode, name, _bboxes)
 
     elif flip == "H":
         mode = "flip_h"
         img, _bboxes = RandomHorizontalFlip(3)(img.copy(), bboxes.copy())
-        plotted_img = draw_rect(path, time, img, mode, name, _bboxes)
+        plotted_img, is_obj_exist = draw_rect(path, time, img, mode, name, _bboxes)
     
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img)   
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img)   
 
 def range_brightness_image(img, bboxes, time, path, name, value):
     mode = "br"
@@ -36,8 +37,9 @@ def range_brightness_image(img, bboxes, time, path, name, value):
     hsv[:, :, 2] = cv2.add(hsv[:, :, 2], mask, dtype=cv2.CV_8U)
 
     img_ver = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    plotted_img = draw_rect(path, time, img_ver, mode, name, bboxes)
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    plotted_img, is_obj_exist = draw_rect(path, time, img_ver, mode, name, bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
 def range_dimming_image(img, bboxes, time, path, name, value):
@@ -48,15 +50,17 @@ def range_dimming_image(img, bboxes, time, path, name, value):
     hsv[:, :, 2] = cv2.subtract(hsv[:, :, 2], mask)
 
     img_ver = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    plotted_img = draw_rect(path, time, img_ver, mode, name, bboxes)
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    plotted_img, is_obj_exist = draw_rect(path, time, img_ver, mode, name, bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
 def range_rotate_image(img, bboxes, time, path, name, value):
     mode = "rotate"
     img_ver, _bboxes = RandomRotate(int(value))(img.copy(), bboxes.copy())
-    plotted_img = draw_rect(path, time, img_ver, mode, name, _bboxes)
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    plotted_img, is_obj_exist = draw_rect(path, time, img_ver, mode, name, _bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
 def splitdata(files, test_data_path, val_data_path, ratio=0.8):
@@ -82,8 +86,9 @@ def hsv_image(img, bboxes, time, path, name, hsv):
     hue, saturation, brightness = hsv
     mode = "hsv" 
     img_ver, bboxes = RandomHSV(int(hue), int(saturation), int(brightness))(img, bboxes)
-    plotted_img = draw_rect(path, time, img_ver, mode, name, bboxes)
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    plotted_img, is_obj_exist = draw_rect(path, time, img_ver, mode, name, bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
 def cal_duplicate(train_demand, split_ratio, current_amount, brightness_min, brightness_max):
@@ -120,22 +125,24 @@ def blur(img, bboxes, time, path, name, mosaic_level):
     img = cv2.resize(img, (width // int(mosaic_level), height // int(mosaic_level)), interpolation=cv2.INTER_NEAREST)
     img = cv2.resize(img, (width, height), interpolation=cv2.INTER_NEAREST)
 
-    plotted_img = draw_rect(path, time, img, mode, name, bboxes)
-
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img)
+    plotted_img, is_obj_exist = draw_rect(path, time, img, mode, name, bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img)
 
 def scale_image(img, bboxes, time, path, name, value=0.2):
     mode = "scale"
     img_ver, bboxes = RandomScale(value)(img, bboxes)
-    plotted_img = draw_rect(path, time, img_ver, mode, name, bboxes)
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    plotted_img, is_obj_exist = draw_rect(path, time, img_ver, mode, name, bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
 def move_down_image(img, bboxes, time, path, name, value=0.2):
     mode = "mv_dn"
     img_ver, bboxes = RandomTranslate(value)(img, bboxes)
-    plotted_img = draw_rect(path, time, img_ver, mode, name, bboxes)
-    cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
+    plotted_img, is_obj_exist = draw_rect(path, time, img_ver, mode, name, bboxes)
+    if is_obj_exist:
+        cv2.imwrite('{}/{}_{}_{}.png'.format(path, mode, name, time), img_ver)
     return plotted_img
 
 def parser_image_name(path):
@@ -173,21 +180,22 @@ def mosaic(list_image, path, value):
             combined_list.append(new_item)
     grouped_list = [combined_list[i:i + 4] for i in range(0, len(combined_list), 4)]
     for g_idx, group in enumerate(grouped_list):
-        print("save mosaic image NO.{} : ".format(g_idx))
+        print("save mosaic image NO.{} ".format(g_idx))
         _time=time.time()
         image_data, box_data = get_random_data(group, [input_size[0], input_size[1]])
-        image_data = Image.fromarray((image_data * 255).astype(np.uint8))
-        image_data.save('{}/{}_{}_{}.png'.format(path, mode, str(g_idx), _time))
-    
-        with open("{}/{}_{}_{}.txt".format(path, mode, str(g_idx), _time), 'w') as f:
-            for item in box_data:
-                x_min, y_min, x_max, y_max, label = item
-                x_center = ((x_min + x_max) / 2) / input_size[1]
-                y_center = ((y_min + y_max) / 2) / input_size[0]
-            
-                width = (x_max - x_min) / input_size[1]
-                height = (y_max - y_min) / input_size[0] 
-                f.write(f"{int(label)} {x_center} {y_center} {width} {height}\n")
+        if box_data:
+            image_data = Image.fromarray((image_data * 255).astype(np.uint8))
+            image_data.save('{}/{}_{}_{}.png'.format(path, mode, str(g_idx), _time))
+        
+            with open("{}/{}_{}_{}.txt".format(path, mode, str(g_idx), _time), 'w') as f:
+                for item in box_data:
+                    x_min, y_min, x_max, y_max, label = item
+                    x_center = ((x_min + x_max) / 2) / input_size[1]
+                    y_center = ((y_min + y_max) / 2) / input_size[0]
+                
+                    width = (x_max - x_min) / input_size[1]
+                    height = (y_max - y_min) / input_size[0] 
+                    f.write(f"{int(label)} {x_center} {y_center} {width} {height}\n")
 
 def rand(a=0, b=1):
     return np.random.rand() * (b - a) + a
